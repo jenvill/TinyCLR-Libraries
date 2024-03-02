@@ -187,18 +187,11 @@ namespace GHIElectronics.TinyCLR.Data.Json
                         }
                         else if (prop.Value is JArray)
                         {
-                            //if (factory == null)
-                            //    throw new NotSupportedException("You must provide an instance factory if you want to populate objects that have arrays in them");
-
                             var jarray = (JArray)prop.Value;
                             var list = new ArrayList();
                             var array = (Array)DefaultInstanceFactory(path, prop.Value, itemType.GetElementType(), prop.Name, jarray.Length);
                             if (array == null)
-                            {
                                 instance = DefaultInstanceFactory(path, prop.Value, itemType.GetElementType(), prop.Name, jarray.Length);
-                            }
-
-                            //var array = Array.CreateInstance(field.FieldType.GetElementType(), jarray.Length);
                             if (array != null)
                             {
                                 var elemType = array.GetType().GetElementType();
