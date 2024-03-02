@@ -48,7 +48,7 @@ namespace GHIElectronics.TinyCLR.Data.Json
                 return string.Empty;
             }
 
-			FixedStringBuilder sb = new FixedStringBuilder();
+			StringBuilder sb = new StringBuilder();
 			string indent = "  ";
 			if (JsonConverter.SerializationContext != null)
 			{

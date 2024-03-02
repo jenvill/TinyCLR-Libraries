@@ -49,8 +49,13 @@ namespace GHIElectronics.TinyCLR.Data.Json
                     if (methodResult == null)
                         result.AddOrUpdateMember(name.ToLower(), new JProperty(name, JValue.Serialize(m.ReturnType, null)));
                     if (m.ReturnType.IsArray)
-                                            result.AddOrUpdateMember(name.ToLower(), new JProperty(name, JArray.Serialize(m.ReturnType, methodResult, settings)));
-                                        else
+                    {
+                        var j = JArray.Serialize(m.ReturnType, methodResult, settings);
+                        var p = new JProperty(name, j);
+                        var x = p.ToString();
+                        result.AddOrUpdateMember(name.ToLower(), p);
+                    }
+                    else
                     {
                         if (m.ReturnType.IsValueType || m.ReturnType == typeof(string))
                         {
@@ -130,7 +135,7 @@ namespace GHIElectronics.TinyCLR.Data.Json
             EnterSerialization(options);
             try
             {
-                FixedStringBuilder sb = new FixedStringBuilder();
+                StringBuilder sb = new StringBuilder();
 
                 sb.Append(Indent(true) + "{");
                 if (JsonConverter.SerializationContext.options.Indented)

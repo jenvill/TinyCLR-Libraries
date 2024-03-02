@@ -28,7 +28,7 @@ namespace GHIElectronics.TinyCLR.Data.Json
 			EnterSerialization(options);
 			try
 			{
-				FixedStringBuilder sb = new FixedStringBuilder();
+				StringBuilder sb = new StringBuilder();
 				sb.Append('"');
 				sb.Append(this.Name);
                 if (JsonConverter.SerializationContext.options.Indented)
@@ -39,7 +39,8 @@ namespace GHIElectronics.TinyCLR.Data.Json
                 {
                     sb.Append("\":");
                 }
-				sb.Append(this.Value.ToString(options));
+				var x = this.Value.ToString(options);
+                sb.Append(x);
 				return sb.ToString();
 			}
 			finally

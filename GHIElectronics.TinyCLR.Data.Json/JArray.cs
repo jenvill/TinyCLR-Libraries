@@ -55,7 +55,7 @@ namespace GHIElectronics.TinyCLR.Data.Json
                     if (settings.TypeNameHandling == TypeNameHandling.Objects ||
                        (settings.TypeNameHandling == TypeNameHandling.Auto && fieldType != arrayElementType))
                     {
-                        child.Add("$type", new JValue(fieldType.Name + ", " + fieldType.Assembly.GetName().FullName));
+                        child.Add("$type", new JValue(fieldType.Name));
                     }
                     _contents[i] = child;
                 }
@@ -97,7 +97,7 @@ namespace GHIElectronics.TinyCLR.Data.Json
             EnterSerialization(options);
             try
             {
-                FixedStringBuilder sb = new FixedStringBuilder();
+                StringBuilder sb = new StringBuilder();
 
                 sb.Append('[');
                 Indent(true);

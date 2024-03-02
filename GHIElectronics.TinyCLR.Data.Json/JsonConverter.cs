@@ -1,9 +1,10 @@
 using System;
 using System.Collections;
-using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using System.Threading;
+using System.Diagnostics;
 
 namespace GHIElectronics.TinyCLR.Data.Json
 {
@@ -82,37 +83,30 @@ namespace GHIElectronics.TinyCLR.Data.Json
                     var typeName = jobj.Contains("$type") ? ((JValue)jobj["$type"].Value).Value.ToString() : string.Empty;
                     if (!string.IsNullOrEmpty(typeName))
                     {
-                        try
+                        var assembly = baseType.Assembly;
+                        foreach (var type in assembly.GetTypes())
                         {
-                            var assemly = baseType.Assembly;
-                            foreach (var type in assemly.GetTypes())
+                            if (type.Name == typeName)
                             {
-                                if (type.Name == typeName)
-                                {
-                                    instance = type.GetConstructor(new Type[0]).Invoke(new Type[0]);
-                                    break;
-                                }
+                                instance = AppDomain.CurrentDomain.CreateInstanceAndUnwrap(assembly.FullName, type.FullName);
+                                break;
                             }
-                        }
-                        catch
-                        {
-                            instance = null;
                         }
                     }
                 }
             }
             else if (token is JArray jarr)
             {
-                var results = Array.CreateInstance(baseType, length);
+                var result = Array.CreateInstance(baseType, jarr.Length);
                 for (int i = 0; i < jarr.Items.Length; i++)
                 {
                     if (jarr.Items[i] is JObject item)
                     {
-                        ((IList)results)[i] = DefaultInstanceFactory(instancePath, item, baseType, fieldName, length);
+                        ((IList)result)[i] = DefaultInstanceFactory(instancePath, item, baseType, fieldName, length);
                         break;
                     }
                 }
-                instance = results;
+                instance = result;
             }
 
             if (baseType != null && instance == null)
@@ -217,7 +211,7 @@ namespace GHIElectronics.TinyCLR.Data.Json
                                     }
                                     else
                                     {
-                                        var arrayObj = PopulateObject(elem, itemType.GetElementType(), path + "/" + prop.Name, factory);
+                                        var arrayObj = PopulateObject(elem, type, path + "/" + prop.Name, factory);
                                         list.Add(arrayObj);
                                     }
                                 }
@@ -683,7 +677,7 @@ namespace GHIElectronics.TinyCLR.Data.Json
         private static LexToken GetNextTokenInternal(StreamReader sourceReader)
 #endif
         {
-            FixedStringBuilder sb = null;
+            StringBuilder sb = null;
             char openQuote = '\0';
 
             char ch = ' ';
@@ -728,7 +722,7 @@ namespace GHIElectronics.TinyCLR.Data.Json
                 }
                 else if (IsNumberIntroChar(ch))
                 {
-                    sb = new FixedStringBuilder();
+                    sb = new StringBuilder();
                     while (IsNumberChar(ch))
                     {
                         sb.Append(ch);
@@ -764,7 +758,7 @@ namespace GHIElectronics.TinyCLR.Data.Json
                             if (sb == null)
                             {
                                 openQuote = ch;
-                                sb = new FixedStringBuilder();
+                                sb = new StringBuilder();
                             }
                             else
                             {
@@ -822,7 +816,7 @@ namespace GHIElectronics.TinyCLR.Data.Json
                    (ch >= '0' && ch <= '9');
         }
 
-        private static LexToken EndToken(FixedStringBuilder sb)
+        private static LexToken EndToken(StringBuilder sb)
         {
             if (sb != null)
                 return new LexToken() { TType = TokenType.Error, TValue = null };
