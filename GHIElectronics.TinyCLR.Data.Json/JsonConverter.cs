@@ -1,10 +1,9 @@
 using System;
 using System.Collections;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Text;
-using System.Threading;
-using System.Diagnostics;
 
 namespace GHIElectronics.TinyCLR.Data.Json
 {
@@ -76,24 +75,24 @@ namespace GHIElectronics.TinyCLR.Data.Json
         {
             object instance = null;
 
-            if (length != -1)
-            {
-                return null; // we don't do typed or polymorphic arrays yet - use an instance factory
-            }
-
             if (token is JObject jobj)
             {
                 if (jobj.Contains("$type"))
                 {
-                    var typeDefn = jobj.Contains("$type") ? ((JValue)jobj["$type"].Value).Value.ToString() : string.Empty;
-                    if (!string.IsNullOrEmpty(typeDefn))
+                    var typeName = jobj.Contains("$type") ? ((JValue)jobj["$type"].Value).Value.ToString() : string.Empty;
+                    if (!string.IsNullOrEmpty(typeName))
                     {
-                        var idx = typeDefn.IndexOf(',');
-                        var typeName = typeDefn.Substring(0, idx).Trim();
-                        var typeAssy = typeDefn.Substring(idx + 1).Trim();
                         try
                         {
-                            instance = AppDomain.CurrentDomain.CreateInstanceAndUnwrap(typeAssy, typeName);
+                            var assemly = baseType.Assembly;
+                            foreach (var type in assemly.GetTypes())
+                            {
+                                if (type.Name == typeName)
+                                {
+                                    instance = type.GetConstructor(new Type[0]).Invoke(new Type[0]);
+                                    break;
+                                }
+                            }
                         }
                         catch
                         {
@@ -101,6 +100,19 @@ namespace GHIElectronics.TinyCLR.Data.Json
                         }
                     }
                 }
+            }
+            else if (token is JArray jarr)
+            {
+                var results = Array.CreateInstance(baseType, length);
+                for (int i = 0; i < jarr.Items.Length; i++)
+                {
+                    if (jarr.Items[i] is JObject item)
+                    {
+                        ((IList)results)[i] = DefaultInstanceFactory(instancePath, item, baseType, fieldName, length);
+                        break;
+                    }
+                }
+                instance = results;
             }
 
             if (baseType != null && instance == null)
@@ -114,7 +126,7 @@ namespace GHIElectronics.TinyCLR.Data.Json
             if (root is JObject)
             {
                 object instance = null;
-                if (factory!=null)
+                if (factory != null)
                 {
                     instance = factory(path, root, type, null, -1);
                     if (instance != null)
@@ -181,12 +193,12 @@ namespace GHIElectronics.TinyCLR.Data.Json
                         }
                         else if (prop.Value is JArray)
                         {
-                            if (factory == null)
-                                throw new NotSupportedException("You must provide an instance factory if you want to populate objects that have arrays in them");
+                            //if (factory == null)
+                            //    throw new NotSupportedException("You must provide an instance factory if you want to populate objects that have arrays in them");
 
                             var jarray = (JArray)prop.Value;
                             var list = new ArrayList();
-                            var array = (Array)factory(path, prop.Value, itemType.GetElementType(), prop.Name, jarray.Length);
+                            var array = (Array)DefaultInstanceFactory(path, prop.Value, itemType.GetElementType(), prop.Name, jarray.Length);
                             if (array == null)
                             {
                                 instance = DefaultInstanceFactory(path, prop.Value, itemType.GetElementType(), prop.Name, jarray.Length);
@@ -205,7 +217,7 @@ namespace GHIElectronics.TinyCLR.Data.Json
                                     }
                                     else
                                     {
-                                        var arrayObj = PopulateObject(elem, null, path + "/" + prop.Name, factory);
+                                        var arrayObj = PopulateObject(elem, itemType.GetElementType(), path + "/" + prop.Name, factory);
                                         list.Add(arrayObj);
                                     }
                                 }
@@ -327,22 +339,28 @@ namespace GHIElectronics.TinyCLR.Data.Json
                     {
                         result = (int)ulSource;
                     }
-                    else if (baseType == typeof(long)) {
+                    else if (baseType == typeof(long))
+                    {
                         result = (long)ulSource;
                     }
-                    else if (baseType == typeof(ulong)) {
+                    else if (baseType == typeof(ulong))
+                    {
                         result = ulSource;
                     }
-                    else if (baseType == typeof(short)) {
+                    else if (baseType == typeof(short))
+                    {
                         result = (short)ulSource;
                     }
-                    else if (baseType == typeof(ushort)) {
+                    else if (baseType == typeof(ushort))
+                    {
                         result = (ushort)ulSource;
                     }
-                    else if (baseType == typeof(byte)) {
+                    else if (baseType == typeof(byte))
+                    {
                         result = (byte)ulSource;
                     }
-                    else if (baseType == typeof(sbyte)) {
+                    else if (baseType == typeof(sbyte))
+                    {
                         result = (sbyte)ulSource;
                     }
                 }
@@ -665,7 +683,7 @@ namespace GHIElectronics.TinyCLR.Data.Json
         private static LexToken GetNextTokenInternal(StreamReader sourceReader)
 #endif
         {
-            StringBuilder sb = null;
+            FixedStringBuilder sb = null;
             char openQuote = '\0';
 
             char ch = ' ';
@@ -710,7 +728,7 @@ namespace GHIElectronics.TinyCLR.Data.Json
                 }
                 else if (IsNumberIntroChar(ch))
                 {
-                    sb = new StringBuilder();
+                    sb = new FixedStringBuilder();
                     while (IsNumberChar(ch))
                     {
                         sb.Append(ch);
@@ -746,7 +764,7 @@ namespace GHIElectronics.TinyCLR.Data.Json
                             if (sb == null)
                             {
                                 openQuote = ch;
-                                sb = new StringBuilder();
+                                sb = new FixedStringBuilder();
                             }
                             else
                             {
@@ -804,7 +822,7 @@ namespace GHIElectronics.TinyCLR.Data.Json
                    (ch >= '0' && ch <= '9');
         }
 
-        private static LexToken EndToken(StringBuilder sb)
+        private static LexToken EndToken(FixedStringBuilder sb)
         {
             if (sb != null)
                 return new LexToken() { TType = TokenType.Error, TValue = null };

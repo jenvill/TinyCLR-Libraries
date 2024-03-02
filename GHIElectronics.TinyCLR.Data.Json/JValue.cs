@@ -38,7 +38,10 @@ namespace GHIElectronics.TinyCLR.Data.Json
 
                 var type = this.Value.GetType();
                 if (type == typeof(string) || type == typeof(char))
-                    return "\"" + this.Value.ToString() + "\"";
+                {
+                    var t = "\"" + this.Value.ToString() + "\"";
+                    return t;
+                }
                 else if (type == typeof(DateTime))
                     return "\"" + DateTimeExtensions.ToIso8601(((DateTime)this.Value)) + "\"";
                 else if (type == typeof(bool))

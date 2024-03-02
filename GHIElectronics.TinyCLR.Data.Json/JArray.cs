@@ -24,6 +24,8 @@ namespace GHIElectronics.TinyCLR.Data.Json
                 settings = new JsonSerializerSettings();
             }
 
+            var arrayElementType = source.GetType().GetElementType();
+
             _contents = new JToken[source.Length];
             for (int i = 0; i < source.Length; ++i)
             {
@@ -38,18 +40,25 @@ namespace GHIElectronics.TinyCLR.Data.Json
                 {
                     _contents[i] = JValue.Serialize(fieldType, value);
                 }
+                else if (fieldType.IsArray)
+                {
+                    _contents[i] = JArray.Serialize(fieldType, value, settings);
+                }
                 else
                 {
-                    if (fieldType.IsArray)
+                    if (fieldType != null && fieldType.FullName != null && fieldType.FullName.IndexOf("System.Collections.ArrayList") >= 0)
                     {
-                        _contents[i] = JArray.Serialize(fieldType, value, settings);
+                        throw new Exception("Not supported " + fieldType.FullName);
                     }
-                    else
-                    {
-                        _contents[i] = JObject.Serialize(fieldType, value, settings);
-                    }
-                }
 
+                    var child = JObject.Serialize(fieldType, value, settings);
+                    if (settings.TypeNameHandling == TypeNameHandling.Objects ||
+                       (settings.TypeNameHandling == TypeNameHandling.Auto && fieldType != arrayElementType))
+                    {
+                        child.Add("$type", new JValue(fieldType.Name + ", " + fieldType.Assembly.GetName().FullName));
+                    }
+                    _contents[i] = child;
+                }
             }
         }
 
@@ -84,60 +93,60 @@ namespace GHIElectronics.TinyCLR.Data.Json
         }
 
         public override string ToString(JsonSerializationOptions options)
-		{
-			EnterSerialization(options);
-			try
-			{
-				StringBuilder sb = new StringBuilder();
+        {
+            EnterSerialization(options);
+            try
+            {
+                FixedStringBuilder sb = new FixedStringBuilder();
 
-				sb.Append('[');
-				Indent(true);
-				int prefaceLength = 0;
+                sb.Append('[');
+                Indent(true);
+                int prefaceLength = 0;
 
-				bool first = true;
-				foreach (var item in _contents)
-				{
-					if (!first)
-					{
-						if (sb.Length - prefaceLength > 72)
-						{
-							sb.Append(",");
+                bool first = true;
+                foreach (var item in _contents)
+                {
+                    if (!first)
+                    {
+                        if (sb.Length - prefaceLength > 72)
+                        {
+                            sb.Append(",");
                             if (JsonConverter.SerializationContext.options.Indented)
                                 sb.AppendLine();
                             prefaceLength = sb.Length;
-						}
-						else
-						{
-							sb.Append(',');
-						}
-					}
-					first = false;
-					sb.Append(item);
-				}
-				sb.Append(']');
-				Outdent();
-				return sb.ToString();
-			}
-			finally
-			{
-				ExitSerialization();
-			}
-		}
+                        }
+                        else
+                        {
+                            sb.Append(',');
+                        }
+                    }
+                    first = false;
+                    sb.Append(item);
+                }
+                sb.Append(']');
+                Outdent();
+                return sb.ToString();
+            }
+            finally
+            {
+                ExitSerialization();
+            }
+        }
 
-		public override int GetBsonSize()
-		{
+        public override int GetBsonSize()
+        {
             int offset = 0;
             this.ToBson(null, ref offset);
             return offset;
         }
 
         public override int GetBsonSize(string ename)
-		{
+        {
             return 1 + ename.Length + 1 + this.GetBsonSize();
         }
 
         public override void ToBson(byte[] buffer, ref int offset)
-		{
+        {
             int startingOffset = offset;
 
             // leave space for the size
@@ -149,12 +158,12 @@ namespace GHIElectronics.TinyCLR.Data.Json
             }
 
             // Write the trailing nul
-            if (buffer!=null)
+            if (buffer != null)
                 buffer[offset] = (byte)0;
             ++offset;
 
             // Write the completed size
-            if (buffer!=null)
+            if (buffer != null)
                 SerializationUtilities.Marshall(buffer, ref startingOffset, offset - startingOffset);
         }
 
