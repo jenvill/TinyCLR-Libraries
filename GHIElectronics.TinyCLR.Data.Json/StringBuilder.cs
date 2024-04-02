@@ -426,7 +426,6 @@ namespace System.Text
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        [CLSCompliant(false)]
         public FixedStringBuilder Append(sbyte value) => this.Append(value.ToString());
 
         /// <summary>
@@ -441,7 +440,6 @@ namespace System.Text
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        [CLSCompliant(false)]
         public FixedStringBuilder Append(ushort value) => this.Append(value.ToString());
 
         /// <summary>
@@ -449,7 +447,6 @@ namespace System.Text
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        [CLSCompliant(false)]
         public FixedStringBuilder Append(uint value) => this.Append(value.ToString());
 
         /// <summary>
