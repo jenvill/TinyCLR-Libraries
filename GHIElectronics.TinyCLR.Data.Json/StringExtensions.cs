@@ -1,7 +1,4 @@
-﻿using System;
-using System.Text;
-
-namespace GHIElectronics.TinyCLR.Data.Json
+﻿namespace GHIElectronics.TinyCLR.Data.Json
 {
     internal static class StringExtensions
     {

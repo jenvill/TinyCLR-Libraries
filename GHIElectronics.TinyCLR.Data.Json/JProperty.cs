@@ -1,9 +1,8 @@
-using System;
 using System.Text;
 
 namespace GHIElectronics.TinyCLR.Data.Json
 {
-	public class JProperty : JToken
+    public class JProperty : JToken
 	{
 		public JProperty()
 		{

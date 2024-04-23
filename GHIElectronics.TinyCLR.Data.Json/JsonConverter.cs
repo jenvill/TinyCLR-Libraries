@@ -3,7 +3,6 @@ using System.Collections;
 using System.IO;
 using System.Reflection;
 using System.Text;
-using System.Threading;
 using System.Diagnostics;
 
 namespace GHIElectronics.TinyCLR.Data.Json
