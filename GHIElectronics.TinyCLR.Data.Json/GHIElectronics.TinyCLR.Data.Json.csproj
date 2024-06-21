@@ -51,8 +51,8 @@
     <Compile Include="TypeNameHandling.cs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="GHIElectronics.TinyCLR.Core" Version="2.2.0.7000" />
-    <PackageReference Include="GHIElectronics.TinyCLR.IO" Version="2.2.0.7000" />
+    <PackageReference Include="GHIElectronics.TinyCLR.Core" Version="2.2.2.1000" />
+    <PackageReference Include="GHIElectronics.TinyCLR.IO" Version="2.2.2.1000" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

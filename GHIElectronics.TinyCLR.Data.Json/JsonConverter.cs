@@ -660,9 +660,9 @@ namespace GHIElectronics.TinyCLR.Data.Json
         {
             // a diagnostic wrapper, used only in debug builds
             var result = GetNextTokenInternal(sourceReader);
-            Debug.WriteLine(result.TType.TokenTypeToString());
-            if (result.TType == TokenType.String || result.TType == TokenType.Number)
-                Debug.WriteLine("    " + result.TValue);
+            //Debug.WriteLine(result.TType.TokenTypeToString());
+            //if (result.TType == TokenType.String || result.TType == TokenType.Number)
+            //    Debug.WriteLine("    " + result.TValue);
             return result;
         }
 

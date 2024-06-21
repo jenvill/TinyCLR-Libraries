@@ -74,7 +74,7 @@ namespace GHIElectronics.TinyCLR.Data.Json
                             if (settings.TypeNameHandling == TypeNameHandling.Objects ||
                                (settings.TypeNameHandling == TypeNameHandling.Auto && methodResultType != m.ReturnType))
                             {
-                                child.Add("$type", new JValue(methodResultType.FullName));
+                                child.Add("$type", new JValue(methodResultType.Name));
                             }
 
                             result.AddOrUpdateMember(name.ToLower(), new JProperty(name, child));
