@@ -57,14 +57,14 @@ namespace GHIElectronics.TinyCLR.Data.Json
                     }
                     else
                     {
-                        if (m.ReturnType.IsValueType || m.ReturnType == typeof(string))
+                        var methodResultType = methodResult.GetType();
+
+                        if (methodResultType.IsValueType || methodResultType == typeof(string))
                         {
                             result.AddOrUpdateMember(name.ToLower(), new JProperty(name, JValue.Serialize(m.ReturnType, methodResult)));
                         }
                         else
                         {
-                            var methodResultType = methodResult.GetType();
-
                             if (methodResultType != null && methodResultType.FullName != null && methodResultType.FullName.IndexOf("System.Collections.ArrayList") >= 0)
                             {
                                 throw new Exception("Not supported " + methodResultType.FullName);
@@ -122,6 +122,10 @@ namespace GHIElectronics.TinyCLR.Data.Json
                 }
             }
 
+            if (settings.TypeNameHandling == TypeNameHandling.Objects)
+            {
+                result.AddOrUpdateMember("$type", new JProperty("$type", new JValue(type.Name)));
+            }
             return result;
         }
 
