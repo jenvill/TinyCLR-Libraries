@@ -202,6 +202,34 @@ namespace System.Net
             this.m_WasResponseSent = true;
         }
 
+        private void SendHeadersOnClose () {
+            // As first step we disable the callback to SendHeaders, so m_clientStream.Write would not call
+            // SendHeaders() again.
+            this.m_clientStream.HeadersDelegate = null;
+
+            // Creates encoder, generates headers and sends the data.
+            var encoder = Encoding.UTF8;
+
+            var statusLine = encoder.GetBytes(ComposeHTTPResponse());
+
+            this.m_WasResponseSent = true;
+
+            if (this.m_clientStream.WriteHeaderOnClose(statusLine, 0, statusLine.Length)) {
+                
+
+                // Prepares/Updates WEB header collection.
+                PrepareHeaders();
+
+                // Serialise WEB header collection to byte array.
+                var pHeaders = this.m_httpResponseHeaders.ToByteArray();
+
+                // Sends the headers
+                this.m_clientStream.WriteHeaderOnClose(pHeaders, 0, pHeaders.Length);
+
+                
+            }
+        }
+
         /// <summary>
         /// Gets or sets the HTTP status code to be returned to the client.
         /// </summary>
@@ -401,7 +429,7 @@ namespace System.Net
                 {
                     if (!this.m_WasResponseSent)
                     {
-                        SendHeaders();
+                        SendHeadersOnClose();
                     }
                 }
                 finally

@@ -53,14 +53,29 @@ namespace System.Net.Sockets {
         private int m_recvTimeout = System.Threading.Timeout.Infinite;
         private int m_sendTimeout = System.Threading.Timeout.Infinite;
 
+        static int socketInUsedCount = 0;
+
+        static object socketCountObject = new object();
+
+        public static int SocketInUsed => socketInUsedCount;
         public Socket(AddressFamily addressFamily, SocketType socketType, ProtocolType protocolType) {
             this.ni = Socket.DefaultProvider;
             this.m_Handle = this.ni.Create(addressFamily, socketType, protocolType);
+
+            lock(socketCountObject) {
+
+                socketInUsedCount++;
+            }
         }
 
         private Socket(int handle) {
             this.ni = Socket.DefaultProvider;
             this.m_Handle = handle;
+
+            lock(socketCountObject) {
+
+                socketInUsedCount++;
+            }
         }
 
         public int Available {
@@ -471,6 +486,12 @@ namespace System.Net.Sockets {
         [MethodImpl(MethodImplOptions.Synchronized)]
         protected virtual void Dispose(bool disposing) {
             if (this.m_Handle != -1) {
+
+                lock (socketCountObject) {
+                    if (socketInUsedCount > 0)
+                        socketInUsedCount--;
+                }
+
                 this.ni.Close(this.m_Handle);
                 this.m_Handle = -1;
             }

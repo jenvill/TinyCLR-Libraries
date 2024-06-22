@@ -421,6 +421,43 @@ namespace System.Net.Sockets
 
             if (count != 0) throw new IOException();
         }
+
+        public bool WriteHeaderOnClose(byte[] buffer, int offset, int count) {
+            if (this._disposed) return false;
+            if (this._socket.m_Handle == -1) return false;
+            if (buffer == null) return false;
+            if (offset < 0 || offset > buffer.Length) return false;
+            if (count < 0 || count > buffer.Length - offset) return false;
+
+            var bytesSent = 0;
+            int retries = 2;
+            do {
+                if (this._socketType == (int)SocketType.Stream) {
+                    bytesSent = this._socket.Send(buffer, offset, count, SocketFlags.None);
+                }
+                else if (this._socketType == (int)SocketType.Dgram) {
+                    bytesSent = this._socket.SendTo(buffer, offset, count, SocketFlags.None, this._socket.RemoteEndPoint);
+                }
+                else {
+                    throw new NotSupportedException();
+                }
+                count -= bytesSent;
+                offset += bytesSent;
+                if (bytesSent == 0 && count > 0) {
+                    // last send was not successful - wait a bit for the buffers to flush
+                    Threading.Thread.Sleep(100);
+                    --retries;
+                }
+                else {
+                    // last send was fully or partially successful - reset the retries
+                    retries = 5;
+                }
+            } while (retries != 0 && count > 0);
+
+            if (count != 0) return false;
+
+            return true;
+        }
     }
 }
 

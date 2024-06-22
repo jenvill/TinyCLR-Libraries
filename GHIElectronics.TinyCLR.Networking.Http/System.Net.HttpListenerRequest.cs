@@ -96,7 +96,7 @@ namespace System.Net
         /// <param name="maxHeaderLen">TBD</param>
         internal HttpListenerRequest(InputNetworkStreamWrapper clientStream, int maxHeaderLen)
         {
-            this.m_clientStream = clientStream;
+            this.m_clientStream = (InputNetworkStreamWrapper)clientStream.CloneStream();
 
             // maxHeaderLen is in kilobytes (Desktop designer decided so). If -1 just maximum integer value
             this.m_maxResponseHeadersLen = maxHeaderLen == -1 ? 0x7FFFFFFF : maxHeaderLen * 1024;
@@ -283,7 +283,7 @@ namespace System.Net
         /// bytes sent by the client in the body of the request.  This property
         /// returns <itemref>Null</itemref> if no data is sent with the request.
         /// </value>
-        public Stream InputStream => this.m_clientStream.CloneStream();
+        public Stream InputStream => this.m_clientStream;
 
         /// <summary>
         /// Gets a Boolean value that indicates whether the client sending this
